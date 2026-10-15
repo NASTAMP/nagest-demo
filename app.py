@@ -580,9 +580,10 @@ elif sezione_corrente == "🧠 Cervello":
         
     if not st.session_state["cervello_sbloccato"]:
         st.warning("🔒 Questa sezione è protetta da password.")
+        st.info("💡 **Prova a usare il cervello!** La password per sbloccare la demo è: **prova**")
         pwd = st.text_input("Inserisci la password:", type="password", key="pwd_cervello")
         if st.button("Sblocca Sezione", type="primary"):
-            if pwd == "NASTAMP":
+            if pwd == "prova":
                 st.session_state["cervello_sbloccato"] = True
                 st.success("Accesso consentito!")
                 st.rerun()
