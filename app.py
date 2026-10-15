@@ -8,7 +8,7 @@ import random
 
 # Configurazione della pagina Streamlit
 st.set_page_config(
-    page_title="Gestionale Ordini & Preventivi - A&G GROUP (Demo)",
+    page_title="Gestionale Ordini & Preventivi (Demo)",
     page_icon="📦",
     layout="wide"
 )
@@ -225,15 +225,19 @@ def clean_pdf_text(text):
 # Classe per generare il PDF Ordine (Orizzontale)
 class PDFOrder(FPDF):
     def header(self):
+        y_start = 10
         if os.path.exists("logo.png"):
             try:
-                self.image("logo.png", 10, 10, 30)
-                self.set_xy(45, 10)
+                self.image("logo.png", x=10, y=y_start, h=18)
+                self.set_xy(50, y_start)
             except Exception:
-                pass
+                self.set_xy(10, y_start)
+        else:
+            self.set_xy(10, y_start)
         
         self.set_font('Arial', 'B', 14)
-        self.cell(0, 8, 'A&G GROUP - NASTAMP', 0, 1, 'L')
+        self.cell(0, 7, 'IL TUO LOGO - LABORATORIO DI STAMPA', 0, 1, 'L')
+        self.set_x(self.get_x())
         self.set_font('Arial', 'B', 11)
         self.cell(0, 6, 'MANDATO IN STAMPA / BOZZA ORDINE (DEMO)', 0, 1, 'L')
         self.ln(6)
@@ -249,14 +253,14 @@ class PDFPreventivo(FPDF):
         if os.path.exists("logopreventivo.png"):
             try:
                 self.image("logopreventivo.png", x=75, y=8, w=60)
-                self.set_y(38)
+                self.set_y(32)
             except Exception:
                 self.set_y(15)
         else:
             self.set_y(15)
             
         self.line(10, self.get_y(), 200, self.get_y())
-        self.ln(4)
+        self.ln(6)
 
     def footer(self):
         self.set_y(-45)
@@ -430,7 +434,7 @@ def generate_pdf_preventivo(prev, dettagli):
     pdf.set_font('Arial', '', 9)
     pdf.cell(0, 5, "Cordiali saluti,", 0, 1, 'L')
     pdf.set_font('Arial', 'B', 10)
-    pdf.cell(0, 5, "NASTAMP", 0, 1, 'L')
+    pdf.cell(0, 5, "IL TUO LABORATORIO DI STAMPA", 0, 1, 'L')
     
     return pdf.output(dest='S').encode('latin-1')
 
@@ -483,7 +487,7 @@ sezione_corrente = st.session_state["sezione_attiva"]
 # --- SCHERMATA: DASHBOARD (Con Lavagna Memo di Bottega) ---
 if sezione_corrente == "🏠 Dashboard (Panoramica)":
     st.title("📊 Dashboard - Panoramica Ordini (DEMO)")
-    st.info("Benvenuto nel gestionale NASTAMP / A&G GROUP (Versione di Prova).")
+    st.info("Benvenuto nel gestionale (Versione di Prova).")
     
     conn = get_db_connection()
     df_all = pd.read_sql_query("SELECT * FROM ordini", conn)
@@ -666,7 +670,7 @@ elif sezione_corrente == "🧠 Cervello":
 # --- SCHERMATA: PAUSA CAFFÈ (MINI-GAME MONOGIOCATORE) ---
 elif sezione_corrente == "🎮 Pausa Caffè (Mini-Game)":
     st.title("🎮 Pausa Caffè - Sfida il Plotter!")
-    st.info("Sasso, Carta, Forbice in versione Tipografia NASTAMP! Sconfiggi l'intelligenza artificiale della stampante. ☕")
+    st.info("Sasso, Carta, Forbice in versione Tipografia! Sconfiggi l'intelligenza artificiale della stampante. ☕")
 
     if "punti_player" not in st.session_state:
         st.session_state.punti_player = 0
@@ -748,7 +752,7 @@ elif sezione_corrente == "➕ Nuovo Ordine":
 
     if tot_ord_count >= 5:
         st.error("⚠️ **LIMITE VERSIONE DEMO RAGGIUNTO**: Hai salvato il numero massimo di **5 ordini** consentiti in questa versione di prova.")
-        st.warning("💡 **Vuoi sbloccare ordini e preventivi illimitati?** Contatta A&G GROUP / NASTAMP per acquistare la versione completa di **NAGEST GESTIONALE**!")
+        st.warning("💡 **Vuoi sbloccare ordini e preventivi illimitati?** Contattaci per acquistare la versione completa di **NAGEST GESTIONALE**!")
     else:
         st.success(f"Compila i campi sottostanti per registrare un nuovo ordine. (Ordini inseriti: {tot_ord_count}/5)")
 
@@ -785,8 +789,6 @@ elif sezione_corrente == "➕ Nuovo Ordine":
                 st.session_state["righe_articolo"].pop()
                 st.rerun()
 
-        opzioni_tipo_stampa = ["serigrafia", "dtf", "ricamo", "nastamp", "marco", "fascette", "giggino", "neutro", "luma"]
-
         for idx, riga in enumerate(st.session_state["righe_articolo"]):
             c1, c2, c3, c4, c5, c6, c7, c8, c9 = st.columns([1.5, 0.8, 2, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5])
             with c1:
@@ -802,9 +804,7 @@ elif sezione_corrente == "➕ Nuovo Ordine":
             with c6:
                 riga["posizione_stampa"] = st.text_input("POSIZIONE", value=riga["posizione_stampa"], key=f"pos_stampa_{idx}")
             with c7:
-                current_val = riga["stampa"] if riga["stampa"] in opzioni_tipo_stampa else opzioni_tipo_stampa[0]
-                idx_sel = opzioni_tipo_stampa.index(current_val)
-                riga["stampa"] = st.selectbox("TIPO STAMPA", options=opzioni_tipo_stampa, index=idx_sel, key=f"stampa_{idx}")
+                riga["stampa"] = st.text_input("TIPO STAMPA", value=riga.get("stampa", "serigrafia"), key=f"stampa_{idx}")
             with c8:
                 riga["fornitore_articolo"] = st.text_input("FORNITORE", value=riga.get("fornitore_articolo", ""), key=f"forn_art_{idx}")
             with c9:
@@ -921,8 +921,6 @@ elif sezione_corrente == "✏️ Modifica Ordine":
                 else:
                     df_edit_init = df_det_edit.copy()
 
-                opzioni_tipo_stampa = ["serigrafia", "dtf", "ricamo", "nastamp", "marco", "fascette", "giggino", "neutro", "luma"]
-
                 with st.form(key=f"form_modifica_ordine_{edit_id}"):
                     st.markdown(f"### 📋 Modifica Ordine #{edit_id} - {ord_data['ditta']}")
                     col_m1, col_m2 = st.columns(2)
@@ -943,9 +941,8 @@ elif sezione_corrente == "✏️ Modifica Ordine":
                         num_rows="dynamic",
                         use_container_width=True,
                         column_config={
-                            "stampa": st.column_config.SelectboxColumn(
+                            "stampa": st.column_config.TextColumn(
                                 "Tipo Stampa",
-                                options=opzioni_tipo_stampa,
                                 required=True
                             ),
                             "quantita": st.column_config.NumberColumn(
@@ -1000,7 +997,7 @@ elif sezione_corrente == "✏️ Modifica Ordine":
 
 # --- SCHERMATA: PREVENTIVI (Nuovo, Modifica, Archivio) ---
 elif sezione_corrente == "📄 Preventivi":
-    st.title("📄 Gestione Preventivi NA STAMP (Demo)")
+    st.title("📄 Gestione Preventivi (Demo)")
     st.info("Crea, modifica ed esporta in PDF i preventivi.")
 
     tab_nuovo, tab_modifica, tab_archivio = st.tabs(["➕ Crea Nuovo Preventivo", "✏️ Modifica Preventivo", "📂 Archivio Preventivi"])
